@@ -2,35 +2,48 @@ package io.github.dustincodes.localnetworkscanner;
 
 import java.io.IOException;
 import java.net.*;
+import java.util.*;
+import java.util.concurrent.*;
 
 public class NetworkScanner {
 
     public NetworkScanner() {
     }
 
-    public void scanLocalNetwork() {
+    public List<InetAddress> scanLocalNetwork() {
+        final List<InetAddress> reachableAddresses = new ArrayList<>();
         final byte[] ip = getLocalIp();
+        final ExecutorService service;
         if (ip == null) {
-            return;
+            return reachableAddresses;
         }
 
+        service = Executors.newCachedThreadPool();
         for (int i = 1; i <= 254; i++) {
             final int j = i;
-            new Thread(() -> {
+            service.execute(() -> {
                 try {
                     ip[3] = (byte) j;
                     InetAddress address = InetAddress.getByAddress(ip);
-                    String output = address.toString().substring(1);
                     if (address.isReachable(5000)) {
-                        System.out.println(output + " is on the network");
-                    } else {
-                        System.out.println("Not reachable: " + output);
+                        reachableAddresses.add(address);
                     }
+                } catch (SocketException e) {
+                    // ignore
                 } catch (IllegalArgumentException | IOException e) {
                     e.printStackTrace();
                 }
-            }).start();
+            });
         }
+        service.shutdown();
+        try {
+            service.awaitTermination(1, TimeUnit.MINUTES);
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+            service.shutdownNow();
+        }
+
+        return reachableAddresses;
     }
 
     public InetAddress getInetAddressInLocalNetwork(byte subnet) {
