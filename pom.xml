@@ -37,6 +37,7 @@
                 </executions>
                 <configuration>
                     <show>protected</show>
+                    <outputDirectory>${project.basedir}/docs</outputDirectory>
                 </configuration>
             </plugin>
             <plugin>
