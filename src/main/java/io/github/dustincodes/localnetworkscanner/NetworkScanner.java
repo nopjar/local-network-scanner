@@ -60,8 +60,12 @@ public class NetworkScanner {
         return reachableAddresses;
     }
 
+
     /**
      * Tries to find the IP-Address with the specified subnet in your local network.
+     * <p>
+     * This method is blocking for maximum 2.000 milliseconds. Use {@link #getInetAddressInLocalNetwork(byte, int)} to
+     * specify the timeout.
      * <p>
      * The subnet is for example: {@code xxx.xxx.xxx.21}
      * <p>
@@ -72,6 +76,22 @@ public class NetworkScanner {
      * @return the corresponding InetAddress of the subnet, may be null if ip-address is not reachable
      */
     public InetAddress getInetAddressInLocalNetwork(byte subnet) {
+        return getInetAddressInLocalNetwork(subnet, 2000);
+    }
+
+    /**
+     * Tries to find the IP-Address with the specified subnet in your local network.
+     * <p>
+     * The subnet is for example: {@code xxx.xxx.xxx.21}
+     * <p>
+     * If you want to find a specific device (like your phone) over the ip-address, make sure your router always assigns
+     * the same ip-address to your device. You can set this up in the interface of your router.
+     *
+     * @param subnet the subnet of the device to search for
+     * @param timeout the time, in milliseconds, how long the method should try to reach the subnet
+     * @return the corresponding InetAddress of the subnet, may be null if ip-address is not reachable
+     */
+    public InetAddress getInetAddressInLocalNetwork(byte subnet, int timeout) {
         final byte[] ip = getLocalIp();
         if (ip == null) {
             return null;
@@ -80,7 +100,7 @@ public class NetworkScanner {
 
         try {
             InetAddress address = InetAddress.getByAddress(ip);
-            if (address.isReachable(2000)) {
+            if (address.isReachable(timeout)) {
                 return address;
             } else {
                 return null;
